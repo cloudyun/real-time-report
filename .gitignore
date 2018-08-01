@@ -1,0 +1,6 @@
+/bin/
+/target/
+/logs/
+/.settings/
+/.cache-main
+/.cache-tests
