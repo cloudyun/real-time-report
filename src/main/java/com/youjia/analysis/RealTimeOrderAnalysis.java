@@ -28,7 +28,7 @@ public class RealTimeOrderAnalysis extends DoAnalysisAbstract {
 	}
 	
 	public static void main(String[] args) {
-		RealTimeOrderAnalysis analysis = new RealTimeOrderAnalysis("real-time-order");
+		RealTimeOrderAnalysis analysis = new RealTimeOrderAnalysis("config.real-time-order");
 		JavaInputDStream<ConsumerRecord<String, String>> stream = analysis.createDirectStream();
 		analysis.analysis(stream);
 		analysis.updateOffset(stream);
