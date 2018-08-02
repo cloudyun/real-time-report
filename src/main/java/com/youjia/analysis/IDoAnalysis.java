@@ -32,7 +32,7 @@ public interface IDoAnalysis {
 	void analysis(JavaInputDStream<ConsumerRecord<String, String>> stream);
 	
 	/**
-	 * 更新offset到zookeeper
+	 * 更新offset到存储
 	 * @param stream
 	 */
 	void updateOffset(JavaInputDStream<ConsumerRecord<String, String>> stream);
