@@ -8,7 +8,7 @@ import org.apache.spark.streaming.api.java.JavaInputDStream;
 /**  
  * @Title:  RealTimeOrderAnalysis.java   
  * @Package com.youjia.analysis   
- * @Description:    (用一句话描述该文件做什么)   
+ * @Description:    (实时处理订单)   
  * @author: gaoyun     
  * @edit by: 
  * @date:   2018年8月1日 下午4:16:13   
@@ -32,6 +32,6 @@ public class RealTimeOrderAnalysis extends DoAnalysisAbstract {
 		JavaInputDStream<ConsumerRecord<String, String>> stream = analysis.createDirectStream();
 		analysis.analysis(stream);
 		analysis.updateOffset(stream);
-		analysis.getSm().sscRun();
+		analysis.getManager().sscRun();
 	}
 }

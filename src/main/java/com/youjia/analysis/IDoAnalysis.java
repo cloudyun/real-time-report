@@ -6,7 +6,7 @@ import org.apache.spark.streaming.api.java.JavaInputDStream;
 /**  
  * @Title:  IDoAnalysis.java   
  * @Package com.youjia.analysis   
- * @Description:    (用一句话描述该文件做什么)   
+ * @Description:    (流任务接口)   
  * @author: gaoyun     
  * @edit by: 
  * @date:   2018年8月1日 下午4:16:27   

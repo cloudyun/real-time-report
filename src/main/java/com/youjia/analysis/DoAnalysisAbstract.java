@@ -28,7 +28,7 @@ import kafka.utils.ZkUtils;
 /**  
  * @Title:  AnalysisTest.java   
  * @Package com.youjia.analysis   
- * @Description:    TODO(用一句话描述该文件做什么)   
+ * @Description:    (基于zookeeper存储offset)   
  * @author: gaoyun     
  * @edit by: 
  * @date:   2018年7月30日 下午5:41:40   
@@ -38,7 +38,7 @@ public abstract class DoAnalysisAbstract implements IDoAnalysis {
 	
 	protected transient Logger logger;
 
-	private StreamingManager sm;
+	private StreamingManager manager;
 
 	private Map<String, Object> kafkaParams;
 
@@ -61,15 +61,15 @@ public abstract class DoAnalysisAbstract implements IDoAnalysis {
 		logger = Logger.getLogger(this.getClass());
 		
 		Config config = LoadConfig.getInstance(name);
-		sm = StreamingManager.getInstance(config.get("sparkJobName"));
+		manager = StreamingManager.getInstance(config.get("sparkJobName"));
 		
 		topic = config.get("topic");
 		topics = Arrays.asList(topic);
 		topicDirs = new ZKGroupTopicDirs(config.get("zk.group"), topic);
-		children = sm.zkClient.countChildren(topicDirs.consumerOffsetDir());
+		children = manager.zkClient.countChildren(topicDirs.consumerOffsetDir());
 		
 		kafkaParams = new HashMap<String, Object>();
-		kafkaParams.put("bootstrap.servers", sm.brokers);
+		kafkaParams.put("bootstrap.servers", manager.brokers);
 		kafkaParams.put("key.deserializer", StringDeserializer.class);
 		kafkaParams.put("value.deserializer", StringDeserializer.class);
 		kafkaParams.put("group.id", config.get("group.id"));
@@ -100,13 +100,13 @@ public abstract class DoAnalysisAbstract implements IDoAnalysis {
 		if (children > 0) {
 			Map<TopicPartition, Long> fromOffsets = new HashMap<>();
 			for (int x = 0; x < children; x++) {
-				Long offset = sm.zkClient.readData(topicDirs.consumerOffsetDir() + "/" + x);
+				Long offset = manager.zkClient.readData(topicDirs.consumerOffsetDir() + "/" + x);
 				fromOffsets.put(new TopicPartition(topic, x), offset);
 			}
-			stream = KafkaUtils.createDirectStream(sm.jsc, LocationStrategies.PreferConsistent(),
+			stream = KafkaUtils.createDirectStream(manager.jsc, LocationStrategies.PreferConsistent(),
 					ConsumerStrategies.<String, String>Assign(fromOffsets.keySet(), kafkaParams, fromOffsets));
 		} else {
-			stream = KafkaUtils.createDirectStream(sm.jsc, LocationStrategies.PreferConsistent(),
+			stream = KafkaUtils.createDirectStream(manager.jsc, LocationStrategies.PreferConsistent(),
 					ConsumerStrategies.<String, String>Subscribe(topics, kafkaParams));
 		}
 		return stream;
@@ -122,14 +122,14 @@ public abstract class DoAnalysisAbstract implements IDoAnalysis {
 			OffsetRange[] offsetRanges = ((HasOffsetRanges) rdd.rdd()).offsetRanges();
 			for (OffsetRange offsetRange : offsetRanges) {
 				String zkPath = topicDirs.consumerOffsetDir() + "/" + offsetRange.partition();
-				ZkUtils zkUtils = ZkUtils.apply(sm.zkClient, false);
+				ZkUtils zkUtils = ZkUtils.apply(manager.zkClient, false);
 				ArrayList<ACL> acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
 				zkUtils.updatePersistentPath(zkPath, String.valueOf(offsetRange.fromOffset()), acls);
 			}
 		});
 	}
 
-	public StreamingManager getSm() {
-		return sm;
+	public StreamingManager getManager() {
+		return manager;
 	}
 }
