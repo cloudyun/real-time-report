@@ -32,5 +32,6 @@ public class RealTimeOrderAnalysis extends DoAnalysisAbstract {
 		JavaInputDStream<ConsumerRecord<String, String>> stream = analysis.createDirectStream();
 		analysis.analysis(stream);
 		analysis.updateOffset(stream);
+		analysis.getSm().sscRun();
 	}
 }

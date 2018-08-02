@@ -43,8 +43,7 @@ public class StreamingManager {
 		sparkConf.set("spark.streaming.unpersist", config.get("spark.streaming.unpersist"));
 
 		// 设置一个批次从kafka拉取的数据
-		sparkConf.set("spark.streaming.kafka.maxRatePerPartition",
-				config.get("spark.streaming.kafka.maxRatePerPartition"));
+		sparkConf.set("spark.streaming.kafka.maxRatePerPartition", config.get("spark.streaming.kafka.maxRatePerPartition"));
 
 		// sparkConf.setMaster("local[3]")
 

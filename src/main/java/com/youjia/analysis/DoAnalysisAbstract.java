@@ -128,4 +128,8 @@ public abstract class DoAnalysisAbstract implements IDoAnalysis {
 			}
 		});
 	}
+
+	public StreamingManager getSm() {
+		return sm;
+	}
 }
