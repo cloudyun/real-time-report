@@ -39,7 +39,7 @@ public class JavaRankingMetricsExample {
 				.setAppName("Java Ranking Metrics Example");
 		JavaSparkContext sc = new JavaSparkContext(conf);
 		// $example on$
-		String path = "data/mllib/sample_movielens_data.txt";
+		String path = "/data/mllib/sample_movielens_data.txt";
 		JavaRDD<String> data = sc.textFile(path);
 		JavaRDD<Rating> ratings = data.map(line -> {
 			String[] parts = line.split("::");

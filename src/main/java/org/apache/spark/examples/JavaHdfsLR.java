@@ -30,130 +30,133 @@ import java.util.regex.Pattern;
 /**
  * Logistic regression based classification.
  *
- * This is an example implementation for learning how to use Spark. For more conventional use,
- * please refer to org.apache.spark.ml.classification.LogisticRegression.
+ * This is an example implementation for learning how to use Spark. For more
+ * conventional use, please refer to
+ * org.apache.spark.ml.classification.LogisticRegression.
  */
 public final class JavaHdfsLR {
 
-  private static final int D = 10;   // Number of dimensions
-  private static final Random rand = new Random(42);
+	private static final int D = 10; // Number of dimensions
+	private static final Random rand = new Random(42);
 
-  static void showWarning() {
-    String warning = "WARN: This is a naive implementation of Logistic Regression " +
-            "and is given as an example!\n" +
-            "Please use org.apache.spark.ml.classification.LogisticRegression " +
-            "for more conventional use.";
-    System.err.println(warning);
-  }
+	static void showWarning() {
+		String warning = "WARN: This is a naive implementation of Logistic Regression "
+				+ "and is given as an example!\n" + "Please use org.apache.spark.ml.classification.LogisticRegression "
+				+ "for more conventional use.";
+		System.err.println(warning);
+	}
 
-  static class DataPoint implements Serializable {
-    DataPoint(double[] x, double y) {
-      this.x = x;
-      this.y = y;
-    }
+	static class DataPoint implements Serializable {
+		private static final long serialVersionUID = 1L;
+		DataPoint(double[] x, double y) {
+			this.x = x;
+			this.y = y;
+		}
 
-    double[] x;
-    double y;
-  }
+		double[] x;
+		double y;
+	}
 
-  static class ParsePoint implements Function<String, DataPoint> {
-    private static final Pattern SPACE = Pattern.compile(" ");
+	static class ParsePoint implements Function<String, DataPoint> {
+		private static final long serialVersionUID = 1L;
+		private static final Pattern SPACE = Pattern.compile(" ");
 
-    @Override
-    public DataPoint call(String line) {
-      String[] tok = SPACE.split(line);
-      double y = Double.parseDouble(tok[0]);
-      double[] x = new double[D];
-      for (int i = 0; i < D; i++) {
-        x[i] = Double.parseDouble(tok[i + 1]);
-      }
-      return new DataPoint(x, y);
-    }
-  }
+		@Override
+		public DataPoint call(String line) {
+			String[] tok = SPACE.split(line);
+			double y = Double.parseDouble(tok[0]);
+			double[] x = new double[D];
+			for (int i = 0; i < D; i++) {
+				x[i] = Double.parseDouble(tok[i + 1]);
+			}
+			return new DataPoint(x, y);
+		}
+	}
 
-  static class VectorSum implements Function2<double[], double[], double[]> {
-    @Override
-    public double[] call(double[] a, double[] b) {
-      double[] result = new double[D];
-      for (int j = 0; j < D; j++) {
-        result[j] = a[j] + b[j];
-      }
-      return result;
-    }
-  }
+	static class VectorSum implements Function2<double[], double[], double[]> {
+		private static final long serialVersionUID = 1L;
 
-  static class ComputeGradient implements Function<DataPoint, double[]> {
-    private final double[] weights;
+		@Override
+		public double[] call(double[] a, double[] b) {
+			double[] result = new double[D];
+			for (int j = 0; j < D; j++) {
+				result[j] = a[j] + b[j];
+			}
+			return result;
+		}
+	}
 
-    ComputeGradient(double[] weights) {
-      this.weights = weights;
-    }
+	static class ComputeGradient implements Function<DataPoint, double[]> {
+		private static final long serialVersionUID = 1L;
+		private final double[] weights;
 
-    @Override
-    public double[] call(DataPoint p) {
-      double[] gradient = new double[D];
-      for (int i = 0; i < D; i++) {
-        double dot = dot(weights, p.x);
-        gradient[i] = (1 / (1 + Math.exp(-p.y * dot)) - 1) * p.y * p.x[i];
-      }
-      return gradient;
-    }
-  }
+		ComputeGradient(double[] weights) {
+			this.weights = weights;
+		}
 
-  public static double dot(double[] a, double[] b) {
-    double x = 0;
-    for (int i = 0; i < D; i++) {
-      x += a[i] * b[i];
-    }
-    return x;
-  }
+		@Override
+		public double[] call(DataPoint p) {
+			double[] gradient = new double[D];
+			for (int i = 0; i < D; i++) {
+				double dot = dot(weights, p.x);
+				gradient[i] = (1 / (1 + Math.exp(-p.y * dot)) - 1) * p.y * p.x[i];
+			}
+			return gradient;
+		}
+	}
 
-  public static void printWeights(double[] a) {
-    System.out.println(Arrays.toString(a));
-  }
+	public static double dot(double[] a, double[] b) {
+		double x = 0;
+		for (int i = 0; i < D; i++) {
+			x += a[i] * b[i];
+		}
+		return x;
+	}
 
-  public static void main(String[] args) {
+	public static void printWeights(double[] a) {
+		System.out.println(Arrays.toString(a));
+	}
 
-    if (args.length < 2) {
-      System.err.println("Usage: JavaHdfsLR <file> <iters>");
-      System.exit(1);
-    }
+	public static void main(String[] args) {
+		args = new String[] {
+				"/data/mllib/sample_libsvm_data.txt", 
+				"3"
+		};
+		if (args.length < 2) {
+			System.err.println("Usage: JavaHdfsLR <file> <iters>");
+			System.exit(1);
+		}
 
-    showWarning();
+		showWarning();
 
-    SparkSession spark = SparkSession
-      .builder()
-      .appName("JavaHdfsLR")
-      .getOrCreate();
+		SparkSession spark = SparkSession.builder().master("local[3]").appName("JavaHdfsLR").getOrCreate();
 
-    JavaRDD<String> lines = spark.read().textFile(args[0]).javaRDD();
-    JavaRDD<DataPoint> points = lines.map(new ParsePoint()).cache();
-    int ITERATIONS = Integer.parseInt(args[1]);
+		JavaRDD<String> lines = spark.read().textFile(args[0]).javaRDD();
+		JavaRDD<DataPoint> points = lines.map(new ParsePoint()).cache();
+		int ITERATIONS = Integer.parseInt(args[1]);
 
-    // Initialize w to a random value
-    double[] w = new double[D];
-    for (int i = 0; i < D; i++) {
-      w[i] = 2 * rand.nextDouble() - 1;
-    }
+		// Initialize w to a random value
+		double[] w = new double[D];
+		for (int i = 0; i < D; i++) {
+			w[i] = 2 * rand.nextDouble() - 1;
+		}
 
-    System.out.print("Initial w: ");
-    printWeights(w);
+		System.out.print("Initial w: ");
+		printWeights(w);
 
-    for (int i = 1; i <= ITERATIONS; i++) {
-      System.out.println("On iteration " + i);
+		for (int i = 1; i <= ITERATIONS; i++) {
+			System.out.println("On iteration " + i);
 
-      double[] gradient = points.map(
-        new ComputeGradient(w)
-      ).reduce(new VectorSum());
+			double[] gradient = points.map(new ComputeGradient(w)).reduce(new VectorSum());
 
-      for (int j = 0; j < D; j++) {
-        w[j] -= gradient[j];
-      }
+			for (int j = 0; j < D; j++) {
+				w[j] -= gradient[j];
+			}
 
-    }
+		}
 
-    System.out.print("Final w: ");
-    printWeights(w);
-    spark.stop();
-  }
+		System.out.print("Final w: ");
+		printWeights(w);
+		spark.stop();
+	}
 }
